@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USCSP601 - Data Science Practicals</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a0a0f; --card:#12121a; --border:#1e1e2e; --accent:#7c3aed; --accent2:#06b6d4; --text:#e2e8f0; --muted:#64748b; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; padding:2rem 1rem; }
+  .header { text-align:center; margin-bottom:3rem; padding:2rem; background:linear-gradient(135deg,#1a0533,#0a1628); border-radius:16px; border:1px solid var(--accent); }
+  .header h1 { font-size:2rem; font-weight:800; color:#fff; }
+  .header h1 span { color:var(--accent2); }
+  .header p { color:var(--muted); margin-top:0.5rem; }
+  .grid { max-width:1000px; margin:0 auto; display:flex; flex-direction:column; gap:2rem; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; transition:border-color 0.3s; }
+  .card:hover { border-color:var(--accent); }
+  .card-header { display:flex; align-items:center; gap:1rem; padding:1rem 1.5rem; background:linear-gradient(90deg,rgba(124,58,237,0.15),transparent); border-bottom:1px solid var(--border); }
+  .num { width:38px; height:38px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0; }
+  .card-header h2 { font-size:1rem; font-weight:700; color:#fff; }
+  .card-header .tag { font-size:0.78rem; color:var(--accent2); margin-left:auto; background:rgba(6,182,212,0.1); padding:2px 12px; border-radius:20px; white-space:nowrap; }
+  .copy-btn { display:block; margin:0.75rem 1rem 0 auto; width:fit-content; padding:4px 14px; background:rgba(124,58,237,0.2); border:1px solid var(--accent); border-radius:6px; color:var(--accent2); font-family:'Syne',sans-serif; font-size:0.75rem; cursor:pointer; }
+  .copy-btn:hover { background:rgba(124,58,237,0.4); }
+  pre { padding:1.25rem 1.5rem 1.5rem; font-family:'JetBrains Mono',monospace; font-size:0.78rem; line-height:1.8; overflow-x:auto; color:#c9d1d9; }
+  .kw{color:#ff79c6} .fn{color:#50fa7b} .st{color:#f1fa8c} .nm{color:#bd93f9} .imp{color:#8be9fd}
+  .footer { text-align:center; margin-top:3rem; color:var(--muted); font-size:0.8rem; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>USCSP601 — <span>Data Science Practical</span></h1>
+  <p>Practical 2 to 10 · Clean Python Code · No Comments</p>
+</div>
+
+<div class="grid">
+
+<!-- P2 -->
+<div class="card">
+  <div class="card-header"><div class="num">2</div><h2>Data Frames and Basic Pre-processing</h2><span class="tag">pandas · numpy</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+csv_df = pd.read_csv(<span class="st">"data.csv"</span>)
+json_df = pd.read_json(<span class="st">"data.json"</span>)
+df = pd.concat([csv_df, json_df], ignore_index=<span class="kw">True</span>)
+<span class="fn">print</span>(df.head())
+<span class="fn">print</span>(df.isnull().<span class="fn">sum</span>())
+
+numeric_cols = df.select_dtypes(include=np.number).columns
+df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
+
+categorical_cols = df.select_dtypes(include=<span class="st">"object"</span>).columns
+<span class="kw">for</span> col <span class="kw">in</span> categorical_cols:
+    df[col] = df[col].fillna(df[col].mode()[<span class="nm">0</span>])
+
+<span class="kw">def</span> <span class="fn">remove_outliers</span>(data, column):
+    Q1 = data[column].quantile(<span class="nm">0.25</span>)
+    Q3 = data[column].quantile(<span class="nm">0.75</span>)
+    IQR = Q3 - Q1
+    <span class="kw">return</span> data[(data[column] >= Q1 - <span class="nm">1.5</span>*IQR) & (data[column] <= Q3 + <span class="nm">1.5</span>*IQR)]
+
+<span class="kw">for</span> col <span class="kw">in</span> numeric_cols:
+    df = remove_outliers(df, col)
+<span class="fn">print</span>(df.describe())
+
+<span class="kw">if</span> <span class="st">"age"</span> <span class="kw">in</span> df.columns:
+    filtered_df = df[df[<span class="st">"age"</span>] > <span class="nm">30</span>]
+    <span class="fn">print</span>(filtered_df.head())
+
+<span class="kw">if</span> <span class="st">"salary"</span> <span class="kw">in</span> df.columns:
+    sorted_df = df.sort_values(by=<span class="st">"salary"</span>, ascending=<span class="kw">False</span>)
+    <span class="fn">print</span>(sorted_df.head())
+
+<span class="kw">if</span> <span class="st">"department"</span> <span class="kw">in</span> df.columns <span class="kw">and</span> <span class="st">"salary"</span> <span class="kw">in</span> df.columns:
+    grouped_df = df.groupby(<span class="st">"department"</span>)[<span class="st">"salary"</span>].mean()
+    <span class="fn">print</span>(grouped_df)
+
+df.to_csv(<span class="st">"processed_data.csv"</span>, index=<span class="kw">False</span>)</pre>
+</div>
+
+<!-- P3 -->
+<div class="card">
+  <div class="card-header"><div class="num">3</div><h2>Feature Scaling and Dummification</h2><span class="tag">sklearn · pandas</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler, MinMaxScaler
+
+data = {
+    <span class="st">'Age'</span>     : [<span class="nm">25</span>, <span class="nm">45</span>, <span class="nm">35</span>, <span class="nm">52</span>, <span class="nm">23</span>],
+    <span class="st">'Salary'</span>  : [<span class="nm">40000</span>, <span class="nm">80000</span>, <span class="nm">60000</span>, <span class="nm">90000</span>, <span class="nm">30000</span>],
+    <span class="st">'City'</span>    : [<span class="st">'Mumbai'</span>, <span class="st">'Delhi'</span>, <span class="st">'Mumbai'</span>, <span class="st">'Chennai'</span>, <span class="st">'Delhi'</span>],
+    <span class="st">'Education'</span>: [<span class="st">'BSc'</span>, <span class="st">'MSc'</span>, <span class="st">'BSc'</span>, <span class="st">'PhD'</span>, <span class="st">'MSc'</span>]
+}
+df = pd.DataFrame(data)
+<span class="fn">print</span>(df)
+
+std_scaler = StandardScaler()
+df[<span class="st">'Age_Std'</span>]    = std_scaler.fit_transform(df[[<span class="st">'Age'</span>]])
+df[<span class="st">'Salary_Std'</span>] = std_scaler.fit_transform(df[[<span class="st">'Salary'</span>]])
+<span class="fn">print</span>(df[[<span class="st">'Age'</span>, <span class="st">'Age_Std'</span>, <span class="st">'Salary'</span>, <span class="st">'Salary_Std'</span>]])
+
+mm_scaler = MinMaxScaler()
+df[<span class="st">'Age_Norm'</span>]    = mm_scaler.fit_transform(df[[<span class="st">'Age'</span>]])
+df[<span class="st">'Salary_Norm'</span>] = mm_scaler.fit_transform(df[[<span class="st">'Salary'</span>]])
+<span class="fn">print</span>(df[[<span class="st">'Age'</span>, <span class="st">'Age_Norm'</span>, <span class="st">'Salary'</span>, <span class="st">'Salary_Norm'</span>]])
+
+df_encoded = pd.get_dummies(df[[<span class="st">'City'</span>, <span class="st">'Education'</span>]], drop_first=<span class="kw">True</span>)
+<span class="fn">print</span>(df_encoded)</pre>
+</div>
+
+<!-- P4 -->
+<div class="card">
+  <div class="card-header"><div class="num">4</div><h2>Hypothesis Testing</h2><span class="tag">scipy</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy <span class="kw">import</span> stats
+
+group_a = np.random.normal(<span class="nm">75</span>, <span class="nm">10</span>, <span class="nm">30</span>)
+group_b = np.random.normal(<span class="nm">68</span>, <span class="nm">10</span>, <span class="nm">30</span>)
+
+t_stat, p_val = stats.ttest_ind(group_a, group_b)
+<span class="fn">print</span>(<span class="st">"T-Test:"</span>)
+<span class="fn">print</span>(<span class="st">"t-statistic:"</span>, t_stat)
+<span class="fn">print</span>(<span class="st">"p-value:"</span>, p_val)
+<span class="fn">print</span>(<span class="st">"Reject H0"</span> <span class="kw">if</span> p_val < <span class="nm">0.05</span> <span class="kw">else</span> <span class="st">"Fail to Reject H0"</span>)
+
+sample = np.random.normal(<span class="nm">73</span>, <span class="nm">8</span>, <span class="nm">25</span>)
+t2, p2 = stats.ttest_1samp(sample, popmean=<span class="nm">70</span>)
+<span class="fn">print</span>(<span class="st">"\nOne-Sample T-Test (H0: mean=70):"</span>)
+<span class="fn">print</span>(<span class="st">"t-statistic:"</span>, t2)
+<span class="fn">print</span>(<span class="st">"p-value:"</span>, p2)
+<span class="fn">print</span>(<span class="st">"Reject H0"</span> <span class="kw">if</span> p2 < <span class="nm">0.05</span> <span class="kw">else</span> <span class="st">"Fail to Reject H0"</span>)
+
+observed = [[<span class="nm">30</span>, <span class="nm">10</span>], [<span class="nm">15</span>, <span class="nm">45</span>]]
+chi2, p_chi, dof, expected = stats.chi2_contingency(observed)
+<span class="fn">print</span>(<span class="st">"\nChi-Square Test:"</span>)
+<span class="fn">print</span>(<span class="st">"chi2:"</span>, chi2)
+<span class="fn">print</span>(<span class="st">"p-value:"</span>, p_chi)
+<span class="fn">print</span>(<span class="st">"Reject H0"</span> <span class="kw">if</span> p_chi < <span class="nm">0.05</span> <span class="kw">else</span> <span class="st">"Fail to Reject H0"</span>)</pre>
+</div>
+
+<!-- P5 -->
+<div class="card">
+  <div class="card-header"><div class="num">5</div><h2>ANOVA – Analysis of Variance</h2><span class="tag">scipy · statsmodels</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> scipy.stats <span class="kw">as</span> stats
+<span class="kw">from</span> statsmodels.stats.multicomp <span class="kw">import</span> pairwise_tukeyhsd
+
+group1 = [<span class="nm">23</span>, <span class="nm">25</span>, <span class="nm">29</span>, <span class="nm">34</span>, <span class="nm">30</span>]
+group2 = [<span class="nm">19</span>, <span class="nm">20</span>, <span class="nm">22</span>, <span class="nm">25</span>, <span class="nm">24</span>]
+group3 = [<span class="nm">15</span>, <span class="nm">18</span>, <span class="nm">20</span>, <span class="nm">21</span>, <span class="nm">17</span>]
+group4 = [<span class="nm">28</span>, <span class="nm">24</span>, <span class="nm">26</span>, <span class="nm">30</span>, <span class="nm">29</span>]
+
+all_data = group1 + group2 + group3 + group4
+group_labels = ([<span class="st">'Group1'</span>] * <span class="fn">len</span>(group1) + [<span class="st">'Group2'</span>] * <span class="fn">len</span>(group2) +
+                [<span class="st">'Group3'</span>] * <span class="fn">len</span>(group3) + [<span class="st">'Group4'</span>] * <span class="fn">len</span>(group4))
+
+f_statistic, p_value = stats.f_oneway(group1, group2, group3, group4)
+<span class="fn">print</span>(<span class="st">"One-Way ANOVA:"</span>)
+<span class="fn">print</span>(<span class="st">"F-statistic:"</span>, f_statistic)
+<span class="fn">print</span>(<span class="st">"P-value:"</span>, p_value)
+
+tukey_results = pairwise_tukeyhsd(all_data, group_labels)
+<span class="fn">print</span>(<span class="st">"\nTukey-Kramer post-hoc test:"</span>)
+<span class="fn">print</span>(tukey_results)</pre>
+</div>
+
+<!-- P6 -->
+<div class="card">
+  <div class="card-header"><div class="num">6</div><h2>Regression and Its Types</h2><span class="tag">sklearn</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.datasets <span class="kw">import</span> fetch_california_housing
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> mean_squared_error, r2_score
+
+housing = fetch_california_housing()
+housing_df = pd.DataFrame(housing.data, columns=housing.feature_names)
+housing_df[<span class="st">'PRICE'</span>] = housing.target
+
+X = housing_df[[<span class="st">'AveRooms'</span>]]
+y = housing_df[<span class="st">'PRICE'</span>]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=<span class="nm">0.2</span>, random_state=<span class="nm">42</span>)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+<span class="fn">print</span>(<span class="st">"Simple Linear Regression:"</span>)
+<span class="fn">print</span>(<span class="st">"MSE:"</span>, mean_squared_error(y_test, y_pred))
+<span class="fn">print</span>(<span class="st">"R2:"</span>, r2_score(y_test, y_pred))
+<span class="fn">print</span>(<span class="st">"Intercept:"</span>, model.intercept_)
+<span class="fn">print</span>(<span class="st">"Coefficient:"</span>, model.coef_)
+
+X = housing_df.drop(<span class="st">'PRICE'</span>, axis=<span class="nm">1</span>)
+y = housing_df[<span class="st">'PRICE'</span>]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=<span class="nm">0.2</span>, random_state=<span class="nm">42</span>)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+<span class="fn">print</span>(<span class="st">"\nMultiple Linear Regression:"</span>)
+<span class="fn">print</span>(<span class="st">"MSE:"</span>, mean_squared_error(y_test, y_pred))
+<span class="fn">print</span>(<span class="st">"R2:"</span>, r2_score(y_test, y_pred))
+<span class="fn">print</span>(<span class="st">"Intercept:"</span>, model.intercept_)
+<span class="fn">print</span>(<span class="st">"Coefficients:"</span>, model.coef_)</pre>
+</div>
+
+<!-- P7 -->
+<div class="card">
+  <div class="card-header"><div class="num">7</div><h2>Logistic Regression and Decision Tree</h2><span class="tag">sklearn</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">from</span> sklearn.datasets <span class="kw">import</span> load_iris
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LogisticRegression
+<span class="kw">from</span> sklearn.tree <span class="kw">import</span> DecisionTreeClassifier
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> accuracy_score, precision_score, recall_score, classification_report
+
+iris = load_iris()
+iris_df = pd.DataFrame(data=np.c_[iris[<span class="st">'data'</span>], iris[<span class="st">'target'</span>]], columns=iris[<span class="st">'feature_names'</span>] + [<span class="st">'target'</span>])
+binary_df = iris_df[iris_df[<span class="st">'target'</span>] != <span class="nm">2</span>]
+
+X = binary_df.drop(<span class="st">'target'</span>, axis=<span class="nm">1</span>)
+y = binary_df[<span class="st">'target'</span>]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=<span class="nm">0.2</span>, random_state=<span class="nm">42</span>)
+
+logistic_model = LogisticRegression()
+logistic_model.fit(X_train, y_train)
+y_pred_logistic = logistic_model.predict(X_test)
+
+<span class="fn">print</span>(<span class="st">"Logistic Regression Metrics:"</span>)
+<span class="fn">print</span>(<span class="st">"Precision:"</span>, precision_score(y_test, y_pred_logistic))
+<span class="fn">print</span>(<span class="st">"Recall:"</span>, recall_score(y_test, y_pred_logistic))
+<span class="fn">print</span>(classification_report(y_test, y_pred_logistic))
+
+decision_tree_model = DecisionTreeClassifier()
+decision_tree_model.fit(X_train, y_train)
+y_pred_tree = decision_tree_model.predict(X_test)
+
+<span class="fn">print</span>(<span class="st">"Decision Tree Metrics:"</span>)
+<span class="fn">print</span>(<span class="st">"Accuracy:"</span>, accuracy_score(y_test, y_pred_tree))
+<span class="fn">print</span>(<span class="st">"Precision:"</span>, precision_score(y_test, y_pred_tree))
+<span class="fn">print</span>(<span class="st">"Recall:"</span>, recall_score(y_test, y_pred_tree))
+<span class="fn">print</span>(classification_report(y_test, y_pred_tree))</pre>
+</div>
+
+<!-- P8 -->
+<div class="card">
+  <div class="card-header"><div class="num">8</div><h2>K-Means Clustering</h2><span class="tag">sklearn · matplotlib</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">from</span> sklearn.datasets <span class="kw">import</span> load_iris
+<span class="kw">from</span> sklearn.cluster <span class="kw">import</span> KMeans
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+<span class="kw">from</span> sklearn.decomposition <span class="kw">import</span> PCA
+
+iris = load_iris()
+iris_df = pd.DataFrame(data=np.c_[iris[<span class="st">'data'</span>], iris[<span class="st">'target'</span>]], columns=iris[<span class="st">'feature_names'</span>] + [<span class="st">'target'</span>])
+
+X = iris_df.drop(<span class="st">'target'</span>, axis=<span class="nm">1</span>)
+X_scaled = StandardScaler().fit_transform(X)
+
+wcss = []
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">11</span>):
+    kmeans = KMeans(n_clusters=i, init=<span class="st">'k-means++'</span>, random_state=<span class="nm">42</span>)
+    kmeans.fit(X_scaled)
+    wcss.append(kmeans.inertia_)
+
+plt.figure(figsize=(<span class="nm">8</span>, <span class="nm">6</span>))
+plt.plot(<span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">11</span>), wcss, marker=<span class="st">'o'</span>, linestyle=<span class="st">'--'</span>)
+plt.title(<span class="st">'Elbow Method'</span>)
+plt.xlabel(<span class="st">'Number of Clusters'</span>)
+plt.ylabel(<span class="st">'WCSS'</span>)
+plt.show()
+
+kmeans = KMeans(n_clusters=<span class="nm">3</span>, init=<span class="st">'k-means++'</span>, random_state=<span class="nm">42</span>)
+kmeans.fit(X_scaled)
+labels = kmeans.labels_
+
+pca = PCA(n_components=<span class="nm">2</span>)
+X_pca = pca.fit_transform(X_scaled)
+centroids = pca.transform(kmeans.cluster_centers_)
+
+plt.figure(figsize=(<span class="nm">8</span>, <span class="nm">6</span>))
+plt.scatter(X_pca[:, <span class="nm">0</span>], X_pca[:, <span class="nm">1</span>], c=labels, cmap=<span class="st">'viridis'</span>, s=<span class="nm">50</span>, alpha=<span class="nm">0.5</span>)
+plt.scatter(centroids[:, <span class="nm">0</span>], centroids[:, <span class="nm">1</span>], marker=<span class="st">'o'</span>, c=<span class="st">'red'</span>, s=<span class="nm">200</span>, edgecolor=<span class="st">'k'</span>)
+plt.title(<span class="st">'K-Means Clustering'</span>)
+plt.xlabel(<span class="st">'Principal Component 1'</span>)
+plt.ylabel(<span class="st">'Principal Component 2'</span>)
+plt.colorbar()
+plt.show()
+
+cluster_df = iris_df.copy()
+cluster_df[<span class="st">'cluster'</span>] = labels
+<span class="kw">for</span> cluster <span class="kw">in</span> <span class="fn">sorted</span>(cluster_df[<span class="st">'cluster'</span>].unique()):
+    <span class="fn">print</span>(<span class="st">f"Cluster {cluster}:"</span>)
+    <span class="fn">print</span>(cluster_df[cluster_df[<span class="st">'cluster'</span>] == cluster].describe())</pre>
+</div>
+
+<!-- P9 -->
+<div class="card">
+  <div class="card-header"><div class="num">9</div><h2>Principal Component Analysis (PCA)</h2><span class="tag">sklearn · matplotlib</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">from</span> sklearn.datasets <span class="kw">import</span> load_iris
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler
+<span class="kw">from</span> sklearn.decomposition <span class="kw">import</span> PCA
+
+iris = load_iris()
+X, y = iris.data, iris.target
+feature_names = iris.feature_names
+
+<span class="fn">print</span>(<span class="st">"Dataset Shape:"</span>, X.shape)
+
+X_scaled = StandardScaler().fit_transform(X)
+
+cov_matrix = np.cov(X_scaled.T)
+<span class="fn">print</span>(<span class="st">"\nCovariance Matrix:\n"</span>, cov_matrix)
+
+eigen_values, eigen_vectors = np.linalg.eig(cov_matrix)
+<span class="fn">print</span>(<span class="st">"\nEigen Values:\n"</span>, eigen_values)
+<span class="fn">print</span>(<span class="st">"\nEigen Vectors:\n"</span>, eigen_vectors)
+
+pca = PCA()
+X_pca = pca.fit_transform(X_scaled)
+
+<span class="fn">print</span>(<span class="st">"\nExplained Variance:"</span>, pca.explained_variance_)
+<span class="fn">print</span>(<span class="st">"\nExplained Variance Ratio:"</span>, pca.explained_variance_ratio_)
+<span class="fn">print</span>(<span class="st">"\nCumulative Explained Variance:"</span>, np.cumsum(pca.explained_variance_ratio_))
+
+loadings = pca.components_.T
+loading_df = pd.DataFrame(loadings, columns=[<span class="st">'PC1'</span>,<span class="st">'PC2'</span>,<span class="st">'PC3'</span>,<span class="st">'PC4'</span>], index=feature_names)
+<span class="fn">print</span>(<span class="st">"\nPCA Loadings:\n"</span>, loading_df)
+
+plt.figure(figsize=(<span class="nm">6</span>, <span class="nm">4</span>))
+plt.plot(<span class="fn">range</span>(<span class="nm">1</span>, <span class="nm">5</span>), pca.explained_variance_, marker=<span class="st">'o'</span>)
+plt.xlabel(<span class="st">"Principal Components"</span>)
+plt.ylabel(<span class="st">"Variance"</span>)
+plt.title(<span class="st">"Scree Plot"</span>)
+plt.grid(<span class="kw">True</span>)
+plt.show()
+
+plt.figure(figsize=(<span class="nm">7</span>, <span class="nm">7</span>))
+plt.scatter(X_pca[:, <span class="nm">0</span>], X_pca[:, <span class="nm">1</span>], c=y)
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(feature_names)):
+    plt.arrow(<span class="nm">0</span>, <span class="nm">0</span>, loadings[i, <span class="nm">0</span>]*<span class="nm">3</span>, loadings[i, <span class="nm">1</span>]*<span class="nm">3</span>, color=<span class="st">'red'</span>, alpha=<span class="nm">0.7</span>)
+    plt.text(loadings[i, <span class="nm">0</span>]*<span class="nm">3.2</span>, loadings[i, <span class="nm">1</span>]*<span class="nm">3.2</span>, feature_names[i], color=<span class="st">'black'</span>)
+plt.xlabel(<span class="st">"Principal Component 1"</span>)
+plt.ylabel(<span class="st">"Principal Component 2"</span>)
+plt.title(<span class="st">"PCA Biplot"</span>)
+plt.grid(<span class="kw">True</span>)
+plt.show()
+
+pca_2 = PCA(n_components=<span class="nm">2</span>)
+X_reduced = pca_2.fit_transform(X_scaled)
+<span class="fn">print</span>(<span class="st">"\nShape after PCA Reduction:"</span>, X_reduced.shape)</pre>
+</div>
+
+<!-- P10 -->
+<div class="card">
+  <div class="card-header"><div class="num">10</div><h2>Data Visualization and Storytelling</h2><span class="tag">seaborn · plotly</span></div>
+  <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+  <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">import</span> plotly.express <span class="kw">as</span> px
+
+data = pd.read_csv(<span class="st">"data.csv"</span>)
+df = data
+
+sns.countplot(data=df, x=<span class="st">'gender'</span>, hue=<span class="st">'churn'</span>)
+plt.title(<span class="st">'Churn Rate by Gender'</span>)
+plt.show()
+
+fig = px.histogram(df, x=<span class="st">'age'</span>, color=<span class="st">'churn'</span>, nbins=<span class="nm">20</span>, histnorm=<span class="st">'percent'</span>)
+fig.update_layout(title=<span class="st">'Churn Rate by Age Group'</span>, xaxis_title=<span class="st">'Age'</span>, yaxis_title=<span class="st">'% of Customers'</span>)
+fig.show()
+
+service_churn = df.groupby(<span class="st">'service_type'</span>)[<span class="st">'churn'</span>].mean()
+plt.pie(service_churn, labels=service_churn.index, autopct=<span class="st">'%1.1f%%'</span>)
+plt.title(<span class="st">'Churn Rate by Service Type'</span>)
+plt.show()
+
+correlation_matrix = df.select_dtypes(include=<span class="st">'number'</span>).corr()
+sns.heatmap(correlation_matrix, annot=<span class="kw">True</span>, cmap=<span class="st">'coolwarm'</span>)
+plt.title(<span class="st">'Correlation Matrix'</span>)
+plt.show()
+
+fig = px.scatter(df, x=<span class="st">'tenure'</span>, y=<span class="st">'churn'</span>, color=<span class="st">'churn'</span>)
+fig.update_layout(title=<span class="st">'Customer Tenure vs. Churn'</span>, xaxis_title=<span class="st">'Tenure'</span>, yaxis_title=<span class="st">'Churn (1=Yes, 0=No)'</span>)
+fig.show()
+
+fig = px.scatter(df, x=<span class="st">'feature1'</span>, y=<span class="st">'feature2'</span>, color=<span class="st">'cluster'</span>)
+fig.update_layout(title=<span class="st">'Customer Segmentation'</span>)
+fig.show()</pre>
+</div>
+
+</div>
+
+<div class="footer" style="max-width:1000px;margin:2rem auto 0;padding:1rem;">
+  USCSP601 · Data Science Practical 2–10 · No Comments · Clean Code
+</div>
+
+<script>
+function copyCode(btn) {
+  const pre = btn.nextElementSibling;
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#10b981';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
